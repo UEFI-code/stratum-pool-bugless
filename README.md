@@ -1,4 +1,4 @@
-High performance Stratum poolserver in Node.js. One instance of this software can startup and manage multiple coin
+Bugless High performance Stratum poolserver in Node.js. One instance of this software can startup and manage multiple coin
 pools, each with their own daemon and stratum port :)
 
 #### Notice
@@ -9,10 +9,11 @@ handles payments, website front-end, database layer, mutli-coin/pool support, au
 etc.. The portal also has an [MPOS](https://github.com/MPOS/php-mpos) compatibility mode so that the it can function as
 a drop-in-replacement for [python-stratum-mining](https://github.com/Crypto-Expert/stratum-mining).
 
+The [orignal code](https://github.com/zone117x/node-stratum-pool) may stopped maintains for 2 years, and it has serious bugs which cause not work on latest npm and bitcoin-core.
 
-[![Build Status](https://travis-ci.org/zone117x/node-stratum-pool.png?branch=master)](https://travis-ci.org/zone117x/node-stratum-pool)
+You should Not use old Bitcoin-Core, or you risk your block to be rejected by the network.
 
-[![NPM](https://nodei.co/npm/stratum-pool.png?downloads=true&stars=true)](https://nodei.co/npm/stratum-pool/)
+So I fixed this code.
 
 #### Why
 This server was built to be more efficient and easier to setup, maintain and scale than existing stratum poolservers
@@ -72,7 +73,7 @@ Example Usage
 #### Install as a node module by cloning repository
 
 ```bash
-git clone https://github.com/zone117x/node-stratum-pool node_modules/stratum-pool
+git clone https://github.com/UEFI-code/stratum-pool-bugless node_modules/stratum-pool
 npm update
 ```
 
@@ -82,80 +83,29 @@ Create the configuration for your coin:
 
 ```javascript
 var myCoin = {
-    "name": "Dogecoin",
-    "symbol": "DOGE",
-    "algorithm": "scrypt", //or "sha256", "scrypt-jane", "scrypt-n", "quark", "x11"
-    "txMessages": false, //or true (not required, defaults to false)
+    "name": "Bitcoin",
+    "symbol": "BTC",
+    "algorithm": "sha256"
 };
-```
 
-If you are using the `scrypt-jane` algorithm there are additional configurations:
-
-```javascript
-var myCoin = {
-    "name": "Freecoin",
-    "symbol": "FEC",
-    "algorithm": "scrypt-jane",
-    "chainStartTime": 1375801200, //defaults to 1367991200 (YACoin) if not used
-    "nMin": 6, //defaults to 4 if not used
-    "nMax": 32 //defaults to 30 if not used
-};
-```
-
-If you are using the `scrypt-n` algorithm there is an additional configuration:
-```javascript
-var myCoin = {
-    "name": "Execoin",
-    "symbol": "EXE",
-    "algorithm": "scrypt-n",
-    /* This defaults to Vertcoin's timetable if not used. It is required for scrypt-n coins that
-       have modified their N-factor timetable to be different than Vertcoin's. */
-    "timeTable": {
-        "2048": 1390959880,
-        "4096": 1438295269,
-        "8192": 1485630658,
-        "16384": 1532966047,
-        "32768": 1580301436,
-        "65536": 1627636825,
-        "131072": 1674972214,
-        "262144": 1722307603
-    }
-};
-```
-
-If you are using the `keccak` algorithm there are additional configurations *(The rare `normalHashing` keccak coins
-such as Copperlark and eCoin don't appear to work yet, byt the popular ones like Maxcoin are)*:
-```javascript
-var myCoin = {
-    "name": "eCoin",
-    "symbol": "ECN",
-    "algorithm": "keccak",
-
-    /* This is not required and set to false by default. Some coins such as Copperlark and eCoin
-       require it to be set to true. Maxcoin and most others are false. */
-    "normalHashing": true,
-    /* The rare normalHashing coins also require diff to be manually set here. Do not use for
-       typical keccak coins like Maxcoin. */
-    "diffShift": 32
-};
-```
-
-
-Create and start new pool with configuration options and authentication function
-
-```javascript
 var Stratum = require('stratum-pool');
-
 var pool = Stratum.createPool({
 
     "coin": myCoin,
 
-    "address": "mi4iBXbBsydtcc5yFmsff2zCFVX4XG7qJc", //Address to where block rewards are given
+    "address": "1KFXyPaYn6Arcv4PKmMcwcHqzXFducXQUm", //Address to where block rewards are given
+
+    /* Block rewards go to the configured pool wallet address to later be paid out to miners,
+       except for a percentage that can go to, for examples, pool operator(s) as pool fees or
+       or to donations address. Addresses or hashed public keys can be used. Here is an example
+       of rewards going to the main pool op, a pool co-owner, and NOMP donation. */
+    "rewardRecipients": {
+        "1KFXyPaYn6Arcv4PKmMcwcHqzXFducXQUm": 1.5, //1.5% goes to pool op
+        "1KFXyPaYn6Arcv4PKmMcwcHqzXFducXQUm": 0.5, //0.5% goes to a pool co-owner
+    },
+
     "blockRefreshInterval": 1000, //How often to poll RPC daemons for new blocks, in milliseconds
 
-    /* How many milliseconds should have passed before new block transactions will trigger a new
-       job broadcast. */
-    "txRefreshInterval": 20000,
 
     /* Some miner apps will consider the pool dead/offline if it doesn't receive anything new jobs
        for around a minute, so every time we broadcast jobs, set a timeout to rebroadcast
@@ -171,12 +121,6 @@ var pool = Stratum.createPool({
 
     /* Sometimes you want the block hashes even for shares that aren't block candidates. */
     "emitInvalidBlockHashes": false,
-
-    /* We use proper maximum algorithm difficulties found in the coin daemon source code. Most
-       miners/pools that deal with scrypt use a guesstimated one that is about 5.86% off from the
-       actual one. So here we can set a tolerable threshold for if a share is slightly too low
-       due to mining apps using incorrect max diffs and this pool using correct max diffs. */
-    "shareVariancePercent": 10,
 
     /* Enable for client IP addresses to be detected when using a load balancer with TCP proxy
        protocol enabled, such as HAProxy with 'send-proxy' param:
@@ -217,7 +161,6 @@ var pool = Stratum.createPool({
         }
     },
 
-
     /* Recommended to have at least two daemon instances running in case one drops out-of-sync
        or offline. For redundancy, all instances will be polled for block/transaction updates
        and be used for submitting blocks. Creating a backup daemon involves spawning a daemon
@@ -228,23 +171,16 @@ var pool = Stratum.createPool({
     "daemons": [
         {   //Main daemon instance
             "host": "127.0.0.1",
-            "port": 19332,
-            "user": "litecoinrpc",
-            "password": "testnet"
-        },
-        {   //Backup daemon instance
-            "host": "127.0.0.1",
-            "port": 19344,
-            "user": "litecoinrpc",
-            "password": "testnet"
+            "port": 8332,
+            "user": "xxx",
+            "password": "xxx"
         }
     ],
 
-
     /* This allows the pool to connect to the daemon as a node peer to receive block updates.
        It may be the most efficient way to get block updates (faster than polling, less
-       intensive than blocknotify script). It requires additional setup: the 'magic' field must
-       be exact (extracted from the coin source code). */
+       intensive than blocknotify script). It requires the additional field "peerMagic" in
+       the coin config. */
     "p2p": {
         "enabled": false,
 
@@ -257,16 +193,11 @@ var pool = Stratum.createPool({
         /* If your coin daemon is new enough (i.e. not a shitcoin) then it will support a p2p
            feature that prevents the daemon from spamming our peer node with unnecessary
            transaction data. Assume its supported but if you have problems try disabling it. */
-        "disableTransactions": true,
+        "disableTransactions": true
 
-        /* Magic value is different for main/testnet and for each coin. It is found in the daemon
-           source code as the pchMessageStart variable.
-           For example, litecoin mainnet magic: http://git.io/Bi8YFw
-           And for litecoin testnet magic: http://git.io/NXBYJA */
-        "magic": "fcc1b7dc"
     }
 
-}, function(ip, workerName, password, callback){ //stratum authorization function
+}, function(ip, port , workerName, password, callback){ //stratum authorization function
     console.log("Authorize " + workerName + ":" + password + "@" + ip);
     callback({
         error: null,
@@ -274,19 +205,15 @@ var pool = Stratum.createPool({
         disconnect: false
     });
 });
-```
-
-
-Listen to pool events
-```javascript
 /*
 
 'data' object contains:
     job: 4, //stratum work job ID
     ip: '71.33.19.37', //ip address of client
+    port: 3333, //port of the client
     worker: 'matt.worker1', //stratum worker name
     height: 443795, //block height
-    reward: 5000000000, //the number of satoshis received as payment for solving this block
+    blockReward: 5000000000, //the number of satoshis received as payment for solving this block
     difficulty: 64, //stratum worker difficulty
     shareDiff: 78, //actual difficulty of the share
     blockDiff: 3349, //block difficulty adjusted for share padding
@@ -318,26 +245,21 @@ pool.on('share', function(isValidShare, isValidBlock, data){
     console.log('share data: ' + JSON.stringify(data));
 });
 
-
-
 /*
 'severity': can be 'debug', 'warning', 'error'
 'logKey':   can be 'system' or 'client' indicating if the error
             was caused by our system or a stratum client
 */
-pool.on('log', function(severity, logKey, logText){
-    console.log(severity + ': ' + '[' + logKey + '] ' + logText);
+pool.on('log', function(severity, logText){
+    console.log(severity + ': ' + logText);
 });
-```
 
-Start pool
-```javascript
 pool.start();
 ```
 
-
 Credits
 -------
+* [SuperHacker UEFI](//github.com/UEFI-code) - Bug Fixer
 * [vekexasia](//github.com/vekexasia) - co-developer & great tester
 * [LucasJones(//github.com/LucasJones) - getting p2p block notify script working and fixed block hashing for various new algos
 * [TheSeven](//github.com/TheSeven) - answering an absurd amount of my questions, found the block 1-16 problem, provided example code for peer node functionality
@@ -352,6 +274,8 @@ Donations
 ---------
 To support development of this project feel free to donate :)
 
+* BTC: `1KFXyPaYn6Arcv4PKmMcwcHqzXFducXQUm`
+* ETH: `0xa69B27aEDA3d4631354f3BAaA771235619Aacb9E`
 * BTC: `1KRotMnQpxu3sePQnsVLRy3EraRFYfJQFR`
 * LTC: `LKfavSDJmwiFdcgaP1bbu46hhyiWw5oFhE`
 * VTC: `VgW4uFTZcimMSvcnE4cwS3bjJ6P8bcTykN`
