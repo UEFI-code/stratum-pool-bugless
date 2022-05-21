@@ -74,13 +74,13 @@ Example Usage
 #### Install as a node module by cloning repository
 
 ```bash
-git clone https://github.com/UEFI-code/stratum-pool-bugless node_modules/stratum-pool
+git clone https://github.com/UEFI-code/stratum-pool-bugless node_modules/stratum-pool-bugless
 npm update
 ```
 
 #### Module usage
 
-Create the configuration for your coin:
+Create the configuration file named 'runpool.js' for your coin:
 
 ```javascript
 var myCoin = {
@@ -256,6 +256,12 @@ pool.on('log', function(severity, logText){
 });
 
 pool.start();
+```
+
+Then, type the follow cmd to start:
+
+```bash
+node runpool.js
 ```
 
 Credits
