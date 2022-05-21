@@ -1,0 +1,40 @@
+{
+    "name": "stratum-pool-bugless",
+    "version": "0.2.0",
+    "description": "Bugless High performance Stratum poolserver in Node.js",
+    "keywords": [
+        "stratum",
+        "mining",
+        "pool",
+        "server",
+        "poolserver",
+        "bitcoin",
+        "litecoin",
+        "scrypt"
+    ],
+    "homepage": "https://github.com/UEFI-code/stratum-pool-bugless",
+    "bugs": {
+        "url": "https://github.com/UEFI-code/stratum-pool-bugless/issues"
+    },
+    "license": "GPL-2.0",
+    "author": "Matthew Little",
+    "contributors": [
+        "SuperHacker UEFI",
+        "vekexasia",
+        "TheSeven"
+    ],
+    "main": "lib/index.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/UEFI-code/stratum-pool-bugless.git"
+    },
+    "dependencies": {
+        "multi-hashing": "https://github.com/zone117x/node-multi-hashing.git",
+        "bignum": "*",
+        "base58-native": "*",
+        "async": "*"
+    },
+    "engines": {
+        "node": ">=0.10"
+    }
+}
