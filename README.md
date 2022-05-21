@@ -74,6 +74,8 @@ Example Usage
 #### Install as a node module by cloning repository
 
 ```bash
+mkdir myPool && cd myPool
+mkdir node_modules
 git clone https://github.com/UEFI-code/stratum-pool-bugless node_modules/stratum-pool-bugless
 npm update
 ```
