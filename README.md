@@ -1,5 +1,6 @@
-# Bugless High performance Stratum poolserver in Node.js. One instance of this software can startup and manage multiple coin
-pools, each with their own daemon and stratum port :)
+# Bugless High performance Stratum poolserver in Node.js. 
+
+One instance of this software can startup and manage multiple coin pools, each with their own daemon and stratum port :)
 
 #### Notice
 This is a module for Node.js that will do nothing on its own. Unless you're a Node.js developer who would like to
